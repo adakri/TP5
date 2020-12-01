@@ -1,0 +1,51 @@
+load "iovtk"
+
+real mu = 0.1;
+real x0 = 0.5;
+real y0 = 0.5;
+real a = 50;
+/*real xmin = 0;
+real ymin = 0;
+real xmax = 1;
+real ymax = 1;
+real MPI = 3.14159265359;*/
+real dt = 0.01;
+real T = 0.1;
+mesh Th=square(50,50);
+
+string rootResults = "./Results/Freefem/";
+exec("rm -r " + rootResults);
+exec("mkdir " + rootResults);
+
+fespace Vh(Th,P1);
+Vh uold, u, v, es;
+
+int N = 0;
+
+
+
+for(real t=0;t<T;t+=dt)
+{
+	func exactSol = (exp(-a*((x-x0)*(x-x0)+(y-y0)*(y-y0)))); //*(x-xmin)*(x-xmax)*(y-ymin)*(y-ymax)*(x-xmin)*(x-xmax)*(y-ymin)*(y-ymax)*(1+sin(MPI*t/4.))/2.);
+
+	func f = 0; //0.125*MPI*pow(x - xmax, 2)*pow(x - xmin, 2)*pow(y - ymax, 2)*pow(y - ymin, 2)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2)))*cos(0.25*MPI*t) - mu*(0.5*pow(a, 2)*pow(x - xmax, 2)*pow(x - xmin, 2)*pow(2*x - 2*x0, 2)*pow(y - ymax, 2)*pow(y - ymin, 2)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))) + 0.5*pow(a, 2)*pow(x - xmax, 2)*pow(x - xmin, 2)*pow(y - ymax, 2)*pow(y - ymin, 2)*pow(2*y - 2*y0, 2)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))) - 2.0*a*pow(x - xmax, 2)*pow(x - xmin, 2)*pow(y - ymax, 2)*pow(y - ymin, 2)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))) - 1.0*a*pow(x - xmax, 2)*pow(x - xmin, 2)*pow(y - ymax, 2)*(2*y - 2*y0)*(2*y - 2*ymin)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))) - 1.0*a*pow(x - xmax, 2)*pow(x - xmin, 2)*pow(y - ymin, 2)*(2*y - 2*y0)*(2*y - 2*ymax)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))) - 1.0*a*pow(x - xmax, 2)*(2*x - 2*x0)*(2*x - 2*xmin)*pow(y - ymax, 2)*pow(y - ymin, 2)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))) - a*(1.0*x - 1.0*xmax)*pow(x - xmin, 2)*(2*x - 2*x0)*pow(y - ymax, 2)*pow(y - ymin, 2)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))) - 0.5*a*pow(x - xmin, 2)*(2*x - 2*x0)*(2*x - 2*xmax)*pow(y - ymax, 2)*pow(y - ymin, 2)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))) + 1.0*pow(x - xmax, 2)*pow(x - xmin, 2)*pow(y - ymax, 2)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))) + 1.0*pow(x - xmax, 2)*pow(x - xmin, 2)*pow(y - ymin, 2)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))) + 1.0*pow(x - xmax, 2)*pow(x - xmin, 2)*(2*y - 2*ymax)*(2*y - 2*ymin)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))) + 1.0*pow(x - xmax, 2)*pow(y - ymax, 2)*pow(y - ymin, 2)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))) + 2*(1.0*x - 1.0*xmax)*(2*x - 2*xmin)*pow(y - ymax, 2)*pow(y - ymin, 2)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))) + 1.0*pow(x - xmin, 2)*pow(y - ymax, 2)*pow(y - ymin, 2)*(sin(0.25*MPI*t) + 1)*exp(-a*(pow(x - x0, 2) + pow(y - y0, 2))));
+
+	problem thermic(u,v)= int2d(Th)(u*v/dt + mu*(dx(u) * dx(v) + dy(u) * dy(v)))
+	           - int2d(Th)(uold*v/dt) - int2d(Th) (f*v);
+
+	if (t==0)
+	{
+		u = exactSol;
+		uold = u;
+	}
+	else
+	{
+    	thermic;   // here solve the thermic problem
+    	uold=u;     // uold = un-1 = un = u
+	}
+
+    es = exactSol;
+	savevtk(rootResults+"/exactsol_"+N+".vtk",Th,es);
+	savevtk(rootResults+"/sol_"+N+".vtk",Th,u);
+	N = N+1;
+}

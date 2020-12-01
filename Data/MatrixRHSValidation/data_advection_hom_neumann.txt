@@ -1,0 +1,42 @@
+# Name of the mesh
+mesh
+Meshes/square_mini.mesh
+
+# Time parameters
+t0
+0
+tfinal
+0.001
+dt
+0.001
+
+# Time scheme: ExplicitEuler = Explicit Euler ImplicitEuler = Implicit Euler
+scheme
+ImplicitEuler
+
+# Diffusion coefficients
+mu
+0.0
+
+# Numerical flux choice: centered or upwind
+numerical_flux
+upwind
+
+# Results folder
+results
+Results/Validation3/
+
+# Boundary Conditions
+# number of references for BC then BC <- reference + BC type
+BoundaryConditions
+4
+1 Neumann
+2 Neumann
+3 Neumann
+4 Neumann
+
+# Test scenarii
+# Choice between: none ; diffusion_hom_neumann ; diffusion_all_BC ;
+# advection_hom_neumann ; advection_all_BC ; diffusion_advection_all_BC
+which_scenario
+advection_hom_neumann
