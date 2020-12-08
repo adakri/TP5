@@ -38,13 +38,64 @@ const VectorXd & TimeScheme::Get_sol() const
 // Euler Explicite
 void EulerScheme::Advance()
 {
-  // TODO
+  //construction de A
+  _fin_vol -> Build_flux_mat_and_rhs(_t);
+  MatrixXd A=_fin_vol -> Get_flux_matrix();
+  //construction de b
+  VectorXd b=_fin_vol ->Get_BC_RHS();
+
+  cout<<b<<endl;
+
+  double dt= _df -> Get_dt();
+  VectorXd S=_fin_vol ->Source_term(_t);
+  cout<<S<<endl;
+
+  _sol=+ dt*S -dt*(A*_sol+b);
+
+
+
 }
 
 // Euler Implicite
 void ImplicitEulerScheme::Advance()
 {
-  // TODO
+  //construction de A
+  _fin_vol -> Build_flux_mat_and_rhs(_t);
+  MatrixXd A=_fin_vol -> Get_flux_matrix();
+  //construction de b
+  VectorXd b=_fin_vol ->Get_BC_RHS();
+;
+  cout<<b<<endl;
+
+  double dt= _df -> Get_dt();
+
+  VectorXd S=_fin_vol ->Source_term(_t+dt);
+
+  cout<<S<<endl;
+
+  //construction de I
+  SparseMatrix<double> I(_sol.size(),_sol.size());
+  vector<Triplet<double>> triplets;	triplets.clear();
+  for (int i=0; i<_sol.size(); i++)
+  {
+      triplets.push_back({i,i,1.});
+  }
+  I.setFromTriplets(triplets.begin(), triplets.end());
+
+
+  //cout<<I<<endl;
+
+  SparseMatrix<double> B= I + dt*A;
+
+
+  SparseLU<SparseMatrix<double>, COLAMDOrdering<int> > solver;
+
+  solver.analyzePattern(B);
+  // Compute the numerical factorization
+  solver.factorize(B);
+  //Use the factors to solve the linear system
+  _sol = solver.solve(_sol - dt*b + dt*S);
+
 }
 
 #define _TIME_SCHEME_CPP

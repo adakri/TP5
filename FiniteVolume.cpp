@@ -14,43 +14,96 @@ _fct(function), _df(data_file), _msh(mesh)
 	std::cout << "-------------------------------------------------" << std::endl;
 }
 
+
+
+
+
+
+
+
 // Construit la matrice des flux
 void FiniteVolume::Build_flux_mat_and_rhs(const double& t)
 {
+	string BC = _msh->Get_edges()[i].Get_BC(); //Renvoie "Dirichlet" ou "Neumann"
+	cout<<BC<<endl;
+	//add ifs to BC
 	// Matrix
 	_mat_flux.resize(_msh->Get_triangles().size(),_msh->Get_triangles().size());
 	// RHS
 	_BC_RHS.resize(_msh->Get_triangles().size());
 	_BC_RHS.setZero();
 	vector<Triplet<double>> triplets;	triplets.clear();
-
+	//arretes
 	vector<Edge> edges;
 	edges= _msh -> Get_edges();
 	int n=edges.size();
 
 	vector<Triangle> triangles;
 	triangles = _msh -> Get_triangles();
-	std::cout << "------------------------------------------------------" << std::endl;
+	//std::cout << "------------------------------------------------------" << std::endl;
+	//surfaces
 	VectorXd area= _msh ->Get_triangles_area();
+	//distance
 	VectorXd bw_length= _msh -> Get_triangles_length();
+	//longueur
 	VectorXd edges_ln= _msh -> Get_edges_length();
+	//
+	Eigen::Matrix<double, Eigen::Dynamic, 2> centers= _msh -> Get_triangles_center();
+  //cout<<centers<<endl;
 
 
-	std::cout << "------------------------------------------------------" << std::endl;
+
+	//cout<<_msh->Get_triangles().size()<<endl;
+	//cout<<_msh->Get_edges().size()<<endl;
 
 
+//	std::cout << "------------------------------------------------------" << std::endl;
 
+
+	int dim=_msh->Get_edges().size();
 	for (int i = 0; i < _msh->Get_edges().size(); i++)
 	{
 		int t1 = _msh->Get_edges()[i].Get_T1();
 		int t2 =	_msh->Get_edges()[i].Get_T2();
+		double mu=_df->Get_mu();
+
+
 
 		if (t2 != -1)
 		{
-					cout<<t1<<" "<<t2<<endl;
+					//cout<<t1<<" "<<t2<<endl;
+					//std::cout << "------------------------------------------------------" << std::endl;
 					double area1=area[t1];
 					double area2=area[t2];
-					double edge_ln=edges_ln[t2]; 
+
+					double c11=centers(t1,0);
+					double c12=centers(t1,1);
+					double c21=centers(t2,0);
+					double c22=centers(t2,1);
+
+
+
+
+					double delta=sqrt(pow(c11-c21,2)+pow(c12-c22,2)); ///////
+					//cout<<delta<<endl;
+
+
+					double alpha=mu/delta;
+
+					double beta=mu/delta;
+
+					double e=edges_ln[i];
+
+
+					//double a=area1/area2;
+					//un plus qlq part
+
+						triplets.push_back({t1,t2,-e*beta/area1});
+						triplets.push_back({t2,t1,-e*alpha/area2});
+						triplets.push_back({t1,t1,e*alpha/area1});
+						triplets.push_back({t2,t2,e*beta/area2});
+
+
 		}
 		else
 		{
@@ -62,6 +115,7 @@ void FiniteVolume::Build_flux_mat_and_rhs(const double& t)
 	}
 	_mat_flux.setFromTriplets(triplets.begin(), triplets.end());
 }
+
 
 const MatrixXd FiniteVolume::Get_Matrix_A()
 {

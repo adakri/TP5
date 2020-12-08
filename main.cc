@@ -39,8 +39,10 @@ int main(int argc, char** argv)
 
   //---------tests----------------------------------
   cout<<"----------------------tests-------------------------"<<endl;
-  MatrixXd Mat=fin_vol -> Get_Matrix_A();
-  std::cout << Mat <<endl;
+
+
+
+
 
   if (data_file->Get_scheme() == "ExplicitEuler")
     time_scheme = new EulerScheme(data_file, fin_vol);
@@ -67,6 +69,8 @@ int main(int argc, char** argv)
       time_scheme->Advance();
       time_scheme->Save_solution(n);
     }
+
+
   }
   else //  Si on connait la solution exacte
   {
@@ -94,6 +98,11 @@ int main(int argc, char** argv)
       error_file << t << " " << error << endl;
     }
     error_file.close();
+    //test de solution
+    MatrixXd Mat=fin_vol -> Get_flux_matrix();
+    std::cout << Mat <<endl;
+    VectorXd Solution=time_scheme -> Get_sol();
+    cout<<Solution<<endl;
   }
   // ---------------------------------------------------------------------------
 
